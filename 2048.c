@@ -124,6 +124,7 @@ void printAll(int** map, struct GameData* data) {
     printf("\n\n");
 }
 
+// merging left all rows, returns true when move succeeds
 int moveLeft (int** map, struct GameData* gameDataPointer) {
     int moveCount = 0;
     for (int indexRow = 0; indexRow < SIZE; indexRow++) {
@@ -131,17 +132,23 @@ int moveLeft (int** map, struct GameData* gameDataPointer) {
         int mergeCount = 0;
         for (int indexColumn = 0; indexColumn < SIZE; indexColumn++) {
             if (indexColumn != 0 && row[indexColumn] != 0) {
+                // targetIndex: the destination current number should be moved to
                 int targetIndex = indexColumn;
-                for (int indexTarget = indexColumn - 1; indexTarget > mergeCount - 1; indexTarget--) {
+                // traverse from current number to the left
+                for (int indexTarget = indexColumn - 1; indexTarget >= mergeCount; indexTarget--) {
                     if (row[indexTarget] == 0) {
                         targetIndex = indexTarget;
-                    } else if (row[indexTarget] == row[indexColumn] && row[indexTarget] != 0) {
-                        targetIndex = indexTarget;
-                        mergeCount++;
-                    } else if (row[indexTarget] != row[indexColumn] && row[indexTarget] != 0)
-                        break;
+                    } else {
+                        if (row[indexTarget] == row[indexColumn]) {
+                            targetIndex = indexTarget;
+                            mergeCount++;
+                        } else {
+                            break;
+                        }
+                    }
                 }
                 if (targetIndex != indexColumn) {
+                    // when this move involves game data, count the score
                     if (gameDataPointer != NULL)
                         (*gameDataPointer).score += row[targetIndex];
                     row[targetIndex] += row[indexColumn];

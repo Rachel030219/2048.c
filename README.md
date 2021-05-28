@@ -14,7 +14,7 @@ Move numbers with WASD or arrow keys. Press `q` to quit, `u` to undo and `r` to 
 
 ### Known bugs:
 
-- [ ] 224 merging left produces 8 instead of 44
+- [x] 224 merging left produces 8 instead of 44 (remains to be validated)
 
 ### Features:
 

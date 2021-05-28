@@ -4,7 +4,9 @@
 #include <unistd.h>
 #include <time.h>
 #include <termios.h>
+#include <math.h>
 #define SIZE 4
+#define LOG2 0.693147
 
 struct GameData {
     int score;
@@ -112,9 +114,11 @@ void generateRandomNumber(int** map, int count) {
 void printAll(int** map, struct GameData* data) {
     for (int indexRow = 0; indexRow < SIZE; indexRow++) {
         for (int indexColumn = 0; indexColumn < SIZE; indexColumn++) {
-            if (map[indexRow][indexColumn] != 0)
-                printf("[%d]\t", map[indexRow][indexColumn]);
-            else
+            if (map[indexRow][indexColumn] != 0) {
+                // TODO: avoid color out of bound, add more colors
+                int colorIndex = log(map[indexRow][indexColumn]) / LOG2;
+                printf("\033[30;%dm[%d]\033[0m\t", colorIndex + 100, map[indexRow][indexColumn]);
+            } else
                 printf("[ ]\t");
         }
         printf("\n");

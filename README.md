@@ -20,7 +20,7 @@ Move numbers with WASD or arrow keys. Press `q` to quit, `u` to undo and `r` to 
 
 - [x] Basic game logic
 - [x] Undo
-- [ ] Colorize the background of the numbers
+- [x] Colorize the background of the numbers
 - [ ] Adjust the size of the blocks
 - [ ] Store game records
   - [ ] Display sorted records

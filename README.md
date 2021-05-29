@@ -12,10 +12,6 @@ This is a <ruby><rb>little game</rb><rt>reinvented wheel</rt></ruby> with pure C
 
 Move numbers with WASD or arrow keys. Press `q` to quit, `u` to undo and `r` to restart.
 
-### Known bugs:
-
-- [x] 224 merging left produces 8 instead of 44 (remains to be validated)
-
 ### Features:
 
 - [x] Basic game logic

@@ -180,6 +180,15 @@ void rotate(int** map) {
 }
 
 int checkEnd(int** map) {
+    // check if 2048 exists, ends immediately when true
+    int gameSuccess = 1;
+    for (int indexRow = 0; indexRow < SIZE; indexRow++) {
+        for (int indexColumn = 0; indexColumn < SIZE; indexColumn++) {
+            if (map[indexRow][indexColumn] == 2048)
+                return gameSuccess;
+        }
+    }
+    // if 2048 does not exist, check movable
     int moveSuccess = 0;
     for (int index = 0; index < SIZE; index++) {
         // copy the whole map first

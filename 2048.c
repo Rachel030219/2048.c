@@ -19,6 +19,8 @@ struct Move {
     int score;
 };
 
+short backgroundColorsheet[12] = {0, 124, 198, 90, 21, 30, 64, 56, 28, 208, 166, 2};
+
 int** allocateMap() {
     int** array;
     array = calloc(SIZE, sizeof(array));
@@ -117,7 +119,7 @@ void printAll(int** map, struct GameData* data) {
             if (map[indexRow][indexColumn] != 0) {
                 // TODO: avoid color out of bound, add more colors
                 int colorIndex = log(map[indexRow][indexColumn]) / LOG2;
-                printf("\033[30;%dm[%d]\033[0m\t", colorIndex + 100, map[indexRow][indexColumn]);
+                printf("\033[48;5;%dm[%d]\033[0m\t", backgroundColorsheet[colorIndex], map[indexRow][indexColumn]);
             } else
                 printf("[ ]\t");
         }
@@ -133,22 +135,21 @@ int moveLeft (int** map, struct GameData* gameDataPointer) {
     int moveCount = 0;
     for (int indexRow = 0; indexRow < SIZE; indexRow++) {
         int* row = map[indexRow];
-        int mergeCount = 0;
+        int unmovableCount = 0;
         for (int indexColumn = 0; indexColumn < SIZE; indexColumn++) {
             if (indexColumn != 0 && row[indexColumn] != 0) {
                 // targetIndex: the destination current number should be moved to
                 int targetIndex = indexColumn;
                 // traverse from current number to the left
-                for (int indexTarget = indexColumn - 1; indexTarget >= mergeCount; indexTarget--) {
+                for (int indexTarget = indexColumn - 1; indexTarget >= unmovableCount; indexTarget--) {
                     if (row[indexTarget] == 0) {
                         targetIndex = indexTarget;
                     } else {
-                        if (row[indexTarget] == row[indexColumn]) {
+                        unmovableCount++;
+                        if (row[indexTarget] == row[indexColumn])
                             targetIndex = indexTarget;
-                            mergeCount++;
-                        } else {
+                        else
                             break;
-                        }
                     }
                 }
                 if (targetIndex != indexColumn) {

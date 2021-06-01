@@ -4,7 +4,7 @@
 
 This is a <ruby><rb>little game</rb><rt>reinvented wheel</rt></ruby> with pure C as the term project for the course Basics of Programming and Application of my group. Currently only terminal version is offered, and the project is only tested working on Ubuntu 20.04 focal, compiled with clang version 10.
 
-`2048.c` is the main working file of this project, build and run it in a terminal and you should be able to see what has been achieved. `2048ForVS.c` (if any) is made to be compatible with Visual C++ 2008 and above.
+`2048.c` is the main working file of this project, build and run it in a terminal and you should be able to see what has been achieved. `2048ForVS.c` (if any) is made to be compatible with Visual C++ 2008 and above. Both the main content and `stdafx.h` are included, be sure to split them before compiling.
 
 **⚠IMPORTANT: THIS PROJECT IS STILL UNDER DEVELOPMENT. Variations for different platforms contain large amounts of dreadful platform-exclusive features. The stability and safety of any code in master branch is not guaranteed.**
 

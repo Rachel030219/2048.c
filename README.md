@@ -14,12 +14,12 @@ Move numbers with WASD or arrow keys. Press `q` to quit, `u` to undo and `r` to 
 
 ### Features:
 
-- [x] Basic game logic
-- [x] Undo
-- [x] Colorize the background of the numbers
+- [X] Basic game logic
+- [X] Undo
+- [X] Colorize the background of the numbers
 - [ ] Adjust the size of the blocks
-- [ ] Store game records
-  - [ ] Display sorted records
+- [X] Store game records
+  - [X] Display sorted records
 - [ ] GUI
 
 ## Credit

@@ -7,11 +7,18 @@
 #include <math.h>
 #define SIZE 4
 #define LOG2 0.693147
+#define SAVE_FILE "records.txt"
+#define MAX_RANK_COUNT 10
 
 struct GameData {
     int score;
     int step;
     char name[5];
+};
+
+struct GameDataSet {
+    struct GameData* set;
+    int size;
 };
 
 struct Move {
@@ -204,6 +211,65 @@ int checkEnd(int** map) {
     return moveSuccess == 0;
 }
 
+void saveRecord(struct GameData data) {
+    FILE* file = fopen(SAVE_FILE, "a+");
+    if (file != NULL) {
+        fprintf(file, "%d|%d|%s\n", data.score, data.step, data.name);
+        fclose(file);
+    } else {
+        printf("Error saving record.\n");
+    }
+}
+
+struct GameDataSet readRecords() {
+    int size = SIZE;
+    int index = 0;
+    struct GameDataSet dataSet = { calloc(size, sizeof(struct GameData)), index };
+    FILE* file = fopen(SAVE_FILE, "r");
+    if (file != NULL) {
+        while (!feof(file)) {
+            if (index == size) {
+                size *= 2;
+                struct GameData* tempDataSet = realloc(dataSet.set, size * sizeof(struct GameData));
+                if (tempDataSet != NULL) {
+                    dataSet.set = tempDataSet;
+                } else {
+                    printf("Realloc memory failed.\n");
+                    return dataSet;
+                }
+            }
+            struct GameData data;
+            fscanf(file, "%d|%d|%s\n", &data.score, &data.step, data.name);
+            dataSet.set[index] = data;
+            index++;
+        }
+        fclose(file);
+        dataSet.size = index;
+    } else {
+        dataSet.set = NULL;
+        dataSet.size = 0;
+    }
+    return dataSet;
+}
+
+void displayRecords(struct GameDataSet dataSet) {
+    // TODO: iterate, sort and display top 10 records
+    int displaySort[MAX_RANK_COUNT];
+    memset(displaySort, -1, MAX_RANK_COUNT);
+}
+
+int checkWhetherTopRanked(struct GameData data, struct GameDataSet dataSet) {
+    int recordAboveCurrentCount = 0;
+    for (int i = 0; i < dataSet.size; i++) {
+        if (dataSet.set[i].score > data.score)
+            recordAboveCurrentCount++;
+        if (recordAboveCurrentCount == MAX_RANK_COUNT) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 struct GameData start(int** map) {
     struct GameData data = {0, 0, ""};
     clearMap(map);
@@ -322,12 +388,23 @@ int main() {
             printAll(gameMap, &gameData);
             if (checkEnd(gameMap)) {
                 printf("game end!\n");
+                gameEnd = 1;
             } else {
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
             }
         }
     }
     setBufferedInput(1);
+    struct GameDataSet dataSet = readRecords();
+    if (checkWhetherTopRanked(gameData, dataSet)) {
+        displayRecords(dataSet);
+        printf("Please type your name (max 4 chars) and leave blank if you don\'t want to leave your record:\n");
+        scanf("%s", gameData.name);
+        if (gameData.name[0] != '\0') {
+            saveRecord(gameData);
+            displayRecords(readRecords());
+        }
+    }
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);
     return EXIT_SUCCESS;
 }

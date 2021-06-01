@@ -13,7 +13,7 @@
 struct GameData {
     int score;
     int step;
-    char name[5];
+    char name[10];
 };
 
 struct GameDataSet {
@@ -124,7 +124,6 @@ void printAll(int** map, struct GameData* data) {
     for (int indexRow = 0; indexRow < SIZE; indexRow++) {
         for (int indexColumn = 0; indexColumn < SIZE; indexColumn++) {
             if (map[indexRow][indexColumn] != 0) {
-                // TODO: avoid color out of bound, add more colors
                 int colorIndex = log(map[indexRow][indexColumn]) / LOG2;
                 printf("\033[48;5;%dm[%d]\033[0m\t", backgroundColorsheet[colorIndex], map[indexRow][indexColumn]);
             } else
@@ -211,6 +210,12 @@ int checkEnd(int** map) {
     return moveSuccess == 0;
 }
 
+int compareRecord(const void* v1, const void* v2) {
+    const struct GameData* dataPointer1 = (struct GameData*)v1;
+    const struct GameData* dataPointer2 = (struct GameData*)v2;
+    return (dataPointer1 -> score < dataPointer2 -> score) - (dataPointer1 -> score > dataPointer2 -> score);
+}
+
 void saveRecord(struct GameData data) {
     FILE* file = fopen(SAVE_FILE, "a+");
     if (file != NULL) {
@@ -253,9 +258,14 @@ struct GameDataSet readRecords() {
 }
 
 void displayRecords(struct GameDataSet dataSet) {
-    // TODO: iterate, sort and display top 10 records
-    int displaySort[MAX_RANK_COUNT];
-    memset(displaySort, -1, MAX_RANK_COUNT);
+    if (dataSet.set != NULL) {
+        printf("\nScore\tSteps\tName\n");
+        qsort(dataSet.set, dataSet.size, sizeof(struct GameData), compareRecord);
+        int count = dataSet.size < MAX_RANK_COUNT ? dataSet.size : MAX_RANK_COUNT;
+        for (int i = 0; i < count; i++) {
+            printf("%d\t%d\t%s\n", dataSet.set[i].score, dataSet.set[i].step, dataSet.set[i].name);
+        }
+    }
 }
 
 int checkWhetherTopRanked(struct GameData data, struct GameDataSet dataSet) {
@@ -397,12 +407,24 @@ int main() {
     setBufferedInput(1);
     struct GameDataSet dataSet = readRecords();
     if (checkWhetherTopRanked(gameData, dataSet)) {
-        displayRecords(dataSet);
-        printf("Please type your name (max 4 chars) and leave blank if you don\'t want to leave your record:\n");
+        // first make current name to be filled
+        strcpy(gameData.name, "______");
+        // create a new dataSet, copy current records, insert current play data, display it and recycle it
+        struct GameDataSet displayDataSet = { calloc(dataSet.size + 1, sizeof(struct GameData)), dataSet.size + 1 };
+        memcpy(displayDataSet.set, dataSet.set, dataSet.size * sizeof(struct GameData));
+        displayDataSet.set[dataSet.size] = gameData;
+        displayRecords(displayDataSet);
+        free(displayDataSet.set);
+        free(dataSet.set);
+        // ask for name and save data to the file
+        printf("\nPlease type your name:\n");
+        strcpy(gameData.name, "");
         scanf("%s", gameData.name);
         if (gameData.name[0] != '\0') {
             saveRecord(gameData);
-            displayRecords(readRecords());
+            displayDataSet = readRecords();
+            displayRecords(displayDataSet);
+            free(displayDataSet.set);
         }
     }
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);

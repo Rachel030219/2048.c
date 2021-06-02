@@ -12,6 +12,11 @@
 #define SAVE_FILE "records.txt"
 #define MAX_RANK_COUNT 10
 
+#define KEY_UP 72
+#define KEY_DOWN 80
+#define KEY_LEFT 75
+#define KEY_RIGHT 77
+
 struct GameData {
     int score;
     int step;
@@ -23,13 +28,12 @@ struct GameDataSet {
     int size;
 };
 
-struct Move {
+struct Move{
     int** map;
     int score;
 };
 
-// TODO: beautify this
-short colorsheet[12] = {15, 1, 2, 3, 4, 5, 6, 18, 19, 20, 21, 10};
+short colorsheet[12] = { 15, 31, 47, 63, 79, 95, 111, 125, 124, 123, 122, 121 };
 
 int** allocateMap() {
     int** array;
@@ -133,16 +137,16 @@ void generateRandomNumber(int** map, int count) {
 
 void printAll(int** map, struct GameData* data) {
     int indexRow, indexColumn, colorIndex;
-	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
-	system("cls");
+    HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
+    system("cls");
     for (indexRow = 0; indexRow < SIZE; indexRow++) {
         for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
             if (map[indexRow][indexColumn] != 0) {
                 colorIndex = log(map[indexRow][indexColumn]) / LOG2;
-				SetConsoleTextAttribute(console, colorsheet[colorIndex]);
+                SetConsoleTextAttribute(console, colorsheet[colorIndex]);
                 printf("[%d]", map[indexRow][indexColumn]);
-				SetConsoleTextAttribute(console, colorsheet[0]);
-				printf("\t");
+                SetConsoleTextAttribute(console, colorsheet[0]);
+                printf("\t");
             } else
                 printf("[ ]\t");
         }
@@ -154,7 +158,7 @@ void printAll(int** map, struct GameData* data) {
 }
 
 // merging left all rows, returns true when move succeeds
-int moveLeft (int** map, struct GameData* gameDataPointer) {
+int moveLeft(int** map, struct GameData* gameDataPointer) {
     int moveCount = 0;
     int indexRow, indexColumn, indexTarget, targetIndex, unmovableCount;
     int* row;
@@ -194,7 +198,7 @@ int moveLeft (int** map, struct GameData* gameDataPointer) {
 void rotate(int** map) {
     int temp, i, j;
     for (i = 0; i < SIZE / 2; i++) {
-        for (j = i; j < SIZE - i -1; j++) {
+        for (j = i; j < SIZE - i - 1; j++) {
             temp = map[i][j];
             map[i][j] = map[j][SIZE - i - 1];
             map[j][SIZE - i - 1] = map[SIZE - i - 1][SIZE - j - 1];
@@ -282,7 +286,7 @@ struct GameDataSet readRecords() {
 void displayRecords(struct GameDataSet dataSet) {
     int i, count;
     if (dataSet.set != NULL) {
-        printf("\nScore\tSteps\tName\n");
+        printf("Score\tSteps\tName\n");
         qsort(dataSet.set, dataSet.size, sizeof(struct GameData), compareRecord);
         count = dataSet.size < MAX_RANK_COUNT ? dataSet.size : MAX_RANK_COUNT;
         for (i = 0; i < count; i++) {
@@ -327,58 +331,120 @@ int main() {
     while (!gameEnd) {
         int success = 0;
         int moved = 0;
+        int currentInMove = 0;
         switch (getch()) {
-            case 97:   // 'a'
-            case 68:   // left arrow
-                success = moveLeft(gameMap, &gameData);
-                moved = 1;
+            case 97:    // 'a'
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    success = moveLeft(gameMap, &gameData);
+                    moved = 1;
+                }
                 break;
 
-            case 100:  // 'd'
-            case 67:   // right arrow
-                rotate(gameMap);
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                rotate(gameMap);
-                moved = 1;
+            case 100:    // 'd'
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    moved = 1;
+                }
+
                 break;
 
-            case 119:  // 'w'
-            case 65:   // up arrow
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                rotate(gameMap);
-                rotate(gameMap);
-                moved = 1;
+            case 119:    // 'w'
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    moved = 1;
+                }
                 break;
 
-            case 115:  // 's'
-            case 66:   // down arrow
-                rotate(gameMap);
-                rotate(gameMap);
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                moved = 1;
+            case 115:    // 's'
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    moved = 1;
+                }
                 break;
+
+            case 224:
+            case 0:
+                switch(getch()) {
+                    case KEY_UP:    // up arrow
+                        if (!currentInMove) {
+                            currentInMove = 1;
+                            rotate(gameMap);
+                            success = moveLeft(gameMap, &gameData);
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            moved = 1;
+                        }
+                        break;
+
+                    case KEY_DOWN:    // down arrow
+                        if (!currentInMove) {
+                            currentInMove = 1;
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            success = moveLeft(gameMap, &gameData);
+                            rotate(gameMap);
+                            moved = 1;
+                        }
+                        break;
+
+                    case KEY_RIGHT:    // right arrow
+                        if (!currentInMove) {
+                            currentInMove = 1;
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            success = moveLeft(gameMap, &gameData);
+                            rotate(gameMap);
+                            rotate(gameMap);
+                            moved = 1;
+                        }
+                        break;
+
+                    case KEY_LEFT:    // left arrow
+                        if (!currentInMove) {
+                            currentInMove = 1;
+                            success = moveLeft(gameMap, &gameData);
+                            moved = 1;
+                        }
+                        break;
+                }
 
             case 'q':
-                gameEnd = 1;
+                if (!currentInMove) {
+                    gameEnd = 1;
+                }
                 break;
-            
+
             case 'r':
-                gameEnd = 0;
-                recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
-                gameMap = allocateMap();
-                clearMap(gameMap);
-                gameData = start(gameMap);
-                moveHistory = saveMap(gameMap, 0, 0);
+                if (!currentInMove) {
+                    gameEnd = 0;
+                    recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                    gameMap = allocateMap();
+                    clearMap(gameMap);
+                    gameData = start(gameMap);
+                    moveHistory = saveMap(gameMap, 0, 0);
+                }
                 break;
 
             case 'u':
-                if (gameData.step > 0) {
+                if (gameData.step > 0 && !currentInMove) {
                     // first reduce the step
                     gameData.step--;
                     // if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it
@@ -401,11 +467,11 @@ int main() {
             generateRandomNumber(gameMap, 1);
             printAll(gameMap, &gameData);
             if (checkEnd(gameMap)) {
-                printf("game end!\n");
+                printf("game end!\n\n");
                 gameEnd = 1;
-            } else {
+            } else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
-            }
+            currentInMove = 0;
         }
     }
     dataSet = readRecords();
@@ -421,19 +487,19 @@ int main() {
         free(displayDataSet.set);
         free(dataSet.set);
         // ask for name and save data to the file
-        printf("\nPlease type your name:\n");
+        printf("\nPlease type your name (max 9 chars):\n");
         strcpy(gameData.name, "");
-        scanf("%s", gameData.name);
+        scanf("%9s", gameData.name);
         if (gameData.name[0] != '\0') {
             saveRecord(gameData);
             displayDataSet = readRecords();
-	        system("cls");
+            system("cls");
             displayRecords(displayDataSet);
             free(displayDataSet.set);
         }
     }
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);
-	printf("\n\nPress any key to exit.\n");
-	getch();
+    printf("\n\nPress any key to exit.\n");
+    getch();
     return EXIT_SUCCESS;
 }

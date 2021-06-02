@@ -259,7 +259,7 @@ struct GameDataSet readRecords() {
 
 void displayRecords(struct GameDataSet dataSet) {
     if (dataSet.set != NULL) {
-        printf("\nScore\tSteps\tName\n");
+        printf("Score\tSteps\tName\n");
         qsort(dataSet.set, dataSet.size, sizeof(struct GameData), compareRecord);
         int count = dataSet.size < MAX_RANK_COUNT ? dataSet.size : MAX_RANK_COUNT;
         for (int i = 0; i < count; i++) {
@@ -397,7 +397,7 @@ int main() {
             generateRandomNumber(gameMap, 1);
             printAll(gameMap, &gameData);
             if (checkEnd(gameMap)) {
-                printf("game end!\n");
+                printf("game end!\n\n");
                 gameEnd = 1;
             } else {
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
@@ -419,7 +419,7 @@ int main() {
         // ask for name and save data to the file
         printf("\nPlease type your name:\n");
         strcpy(gameData.name, "");
-        scanf("%s", gameData.name);
+        scanf("%9s", gameData.name);
         if (gameData.name[0] != '\0') {
             saveRecord(gameData);
             displayDataSet = readRecords();

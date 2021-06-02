@@ -323,58 +323,75 @@ int main() {
     while (!gameEnd) {
         int success = 0;
         int moved = 0;
+        int currentInMove = 0;
         switch (getchar()) {
             case 97:   // 'a'
             case 68:   // left arrow
-                success = moveLeft(gameMap, &gameData);
-                moved = 1;
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    success = moveLeft(gameMap, &gameData);
+                    moved = 1;
+                }
                 break;
 
             case 100:  // 'd'
             case 67:   // right arrow
-                rotate(gameMap);
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                rotate(gameMap);
-                moved = 1;
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    moved = 1;
+                }
                 break;
 
             case 119:  // 'w'
             case 65:   // up arrow
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                rotate(gameMap);
-                rotate(gameMap);
-                moved = 1;
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    moved = 1;
+                }
                 break;
 
             case 115:  // 's'
             case 66:   // down arrow
-                rotate(gameMap);
-                rotate(gameMap);
-                rotate(gameMap);
-                success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-                moved = 1;
+                if (!currentInMove) {
+                    currentInMove = 1;
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    rotate(gameMap);
+                    success = moveLeft(gameMap, &gameData);
+                    rotate(gameMap);
+                    moved = 1;
+                }
                 break;
 
             case 'q':
-                gameEnd = 1;
+                if (!currentInMove) {
+                    gameEnd = 1;
+                }
                 break;
             
             case 'r':
-                gameEnd = 0;
-                recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
-                gameMap = allocateMap();
-                clearMap(gameMap);
-                gameData = start(gameMap);
-                moveHistory = saveMap(gameMap, 0, 0);
+                if (!currentInMove) {
+                    gameEnd = 0;
+                    recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                    gameMap = allocateMap();
+                    clearMap(gameMap);
+                    gameData = start(gameMap);
+                    moveHistory = saveMap(gameMap, 0, 0);
+                }
                 break;
 
             case 'u':
-                if (gameData.step > 0) {
+                if (gameData.step > 0 && !currentInMove) {
                     // first reduce the step
                     gameData.step--;
                     // if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it
@@ -402,6 +419,7 @@ int main() {
             } else {
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
             }
+            currentInMove = 0;
         }
     }
     setBufferedInput(1);
@@ -417,7 +435,7 @@ int main() {
         free(displayDataSet.set);
         free(dataSet.set);
         // ask for name and save data to the file
-        printf("\nPlease type your name:\n");
+        printf("\nPlease type your name (max 9 chars):\n");
         strcpy(gameData.name, "");
         scanf("%9s", gameData.name);
         if (gameData.name[0] != '\0') {

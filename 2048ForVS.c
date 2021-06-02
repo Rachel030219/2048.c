@@ -1,12 +1,9 @@
-// below: to be included in "stdafx.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <math.h>
 #include <windows.h>
-// below: main c file
-#include "stdafx.h"
 #define SIZE 4
 #define LOG2 0.693147
 #define SAVE_FILE "records.txt"

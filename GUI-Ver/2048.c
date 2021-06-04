@@ -377,7 +377,6 @@ int main() {
     int gameEnd = 0;
     int running = 1;
     int lastMove = -1;   // used to indicate last move direction
-    // struct GameDataSet dataSet, displayDataSet;
 
     // initialize nuklear: define variables
     struct nk_context* context;
@@ -386,13 +385,12 @@ int main() {
     ATOM atom;
     RECT rect = { 0, 0, windowWidth, windowHeight };
     DWORD style = WS_OVERLAPPEDWINDOW;
-    DWORD exstyle = WS_EX_APPWINDOW;
+    DWORD exstyle = WS_EX_TOOLWINDOW;
     HWND wnd;
     HDC dc;
     int needs_refresh = 1;
     // initialize nuklear: Win32
     memset(&wc, 0, sizeof(wc));
-    wc.style = CS_DBLCLKS;
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = GetModuleHandleW(0);
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -468,6 +466,7 @@ int main() {
                 break;
             case RESTART:
                 gameEnd = 0;
+                lastMove = -1;
                 recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
                 gameMap = allocateMap();
                 clearMap(gameMap);
@@ -477,10 +476,14 @@ int main() {
         }
         
         title = (char*)malloc(100 * sizeof(char));
-        if (lastMove != -1)
-            sprintf(title, "current score: %d, step count: %d, moved %s", gameData.score, gameData.step, rotateNames[lastMove]);
-        else
-            sprintf(title, "current score: %d, step count: %d", gameData.score, gameData.step);
+        if (gameEnd) {
+            strcpy(title, "Game ends!");
+        } else {
+            if (lastMove != -1)
+                sprintf(title, "Current score: %d, step count: %d, moved %s", gameData.score, gameData.step, rotateNames[lastMove]);
+            else
+                sprintf(title, "Current score: %d, step count: %d", gameData.score, gameData.step);
+        }
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
             for (indexRow = 0; indexRow < SIZE; indexRow++) {
                 nk_layout_row_dynamic(context, windowHeight / 5, 4);
@@ -516,30 +519,6 @@ int main() {
         command = NONE;
     }
     // TODO: rank system
-    // dataSet = readRecords();
-    // if (checkWhetherTopRanked(gameData, dataSet)) {
-    //     // first make current name to be filled
-    //     strcpy(gameData.name, "______");
-    //     // create a new dataSet, copy current records, insert current play data, display it and recycle it
-    //     displayDataSet.set = calloc(dataSet.size + 1, sizeof(struct GameData));
-    //     displayDataSet.size = dataSet.size + 1;
-    //     memcpy(displayDataSet.set, dataSet.set, dataSet.size * sizeof(struct GameData));
-    //     displayDataSet.set[dataSet.size] = gameData;
-    //     displayRecords(displayDataSet);
-    //     free(displayDataSet.set);
-    //     free(dataSet.set);
-    //     // ask for name and save data to the file
-    //     printf("\nPlease type your name (max 9 chars):\n");
-    //     strcpy(gameData.name, "");
-    //     scanf("%9s", gameData.name);
-    //     if (gameData.name[0] != '\0') {
-    //         saveRecord(gameData);
-    //         displayDataSet = readRecords();
-    //         system("cls");
-    //         displayRecords(displayDataSet);
-    //         free(displayDataSet.set);
-    //     }
-    // }
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);
     // release nuklear
     nk_gdifont_del(font);

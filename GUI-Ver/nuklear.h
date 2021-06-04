@@ -23030,6 +23030,33 @@ nk_text_colored(struct nk_context *ctx, const char *str, int len,
     nk_widget_text(&win->buffer, bounds, str, len, &text, alignment, style->font);
 }
 NK_API void
+nk_text_colored_background(struct nk_context *ctx, const char *str, int len,
+    nk_flags alignment, struct nk_color background, struct nk_color foreground)
+{
+    struct nk_window *win;
+    const struct nk_style *style;
+
+    struct nk_vec2 item_padding;
+    struct nk_rect bounds;
+    struct nk_text text;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    if (!ctx || !ctx->current || !ctx->current->layout) return;
+
+    win = ctx->current;
+    style = &ctx->style;
+    nk_panel_alloc_space(&bounds, ctx);
+    item_padding = style->text.padding;
+
+    text.padding.x = item_padding.x;
+    text.padding.y = item_padding.y;
+    text.background = background;
+    text.text = foreground;
+    nk_widget_text(&win->buffer, bounds, str, len, &text, alignment, style->font);
+}
+NK_API void
 nk_text_wrap_colored(struct nk_context *ctx, const char *str,
     int len, struct nk_color color)
 {

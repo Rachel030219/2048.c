@@ -41,7 +41,7 @@ struct Move{
     int score;
 };
 
-char hexColorsheet[12][8] = { "#DDE1E4", "#f44336", "#7784CF", "#2196f3", "#FFB647", "#EE588A", "#FF7247", "#996C5C", "#C147D7", "#00CCB8", "#0AE2FF", "#4caf50" };
+char hexColorsheet[12][8] = { "#2D3439", "#B0413E", "#37515F", "#844FCF", "#33032F", "#00A896", "#548687", "#6A4D50", "#395D93", "#91A054", "#AB9B36", "#4CB944" };
 
 int windowWidth = 600;
 int windowHeight = 600;
@@ -490,14 +490,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 nk_layout_row_dynamic(context, windowHeight / 5, 4);
                 for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
                     if (gameMap[indexRow][indexColumn] != 0) {
-                        int length = _snprintf(NULL, 0, "[%d]", gameMap[indexRow][indexColumn]);
+                        int length = _snprintf(NULL, 0, "\n[%d]\n", gameMap[indexRow][indexColumn]);
                         char* str = (char*)malloc(length + 1);
-                        _snprintf(str, length + 1, "[%d]", gameMap[indexRow][indexColumn]);
+                        _snprintf(str, length + 1, "\n[%d]\n", gameMap[indexRow][indexColumn]);
                         colorIndex = log((double)(gameMap[indexRow][indexColumn])) / LOG2;
-                        nk_text_colored(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]));
+                        nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#EEEEEE"));
                         free(str);
                     } else {
-                        nk_text_colored(context, "[ ]", 4, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[0]));
+                        nk_text_colored_background(context, "\n[ ]\n", 4, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#EEEEEE"));
                     }
                 }
             }

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
+#include <tchar.h>
 // import nuklear for GUI
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -369,7 +370,7 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
     return DefWindowProcW(wnd, msg, wparam, lparam);
 }
 
-int main() {
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
     // initialize basic variables
     static int** gameMap;
     struct GameData gameData;

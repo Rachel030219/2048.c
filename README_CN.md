@@ -32,12 +32,11 @@
 
 #### 对于 Visual C++ 2010 Express（可能适用于其它 Visual C++）
 
-- 将 Linker -> System -> Subsystem 设定为 `Console (/SUBSYSTEM:CONSOLE)`
-- 在 Linker -> Input -> Additional Dependencies 中，添加 `msimg32.lib`
+- 直接编译运行即可！
 
 #### 对于 MinGW-w64
 
-- 编译时需要添加参数： `-lm -luser32 -lgdi32 -lmsimg32`
+- 编译时需要添加参数： `-lm -luser32 -lgdi32`
 
 ## Credit
 

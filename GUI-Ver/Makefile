@@ -1,5 +1,5 @@
 CC := gcc
-LINKERFLAG = -lm -luser32 -lgdi32 -lmsimg32 -mwindows
+LINKERFLAG = -lm -luser32 -lgdi32 -mwindows
 BIN = bin\2048.exe
 
 all: clean generate

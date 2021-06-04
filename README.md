@@ -32,12 +32,11 @@ Move numbers with WASD or arrow keys. Press `q` to quit, `u` to undo and `r` to 
 
 #### For Visual C++ 2010 Express (might also for other Visual C++)
 
-- Set Linker -> System -> Subsystem to `Console (/SUBSYSTEM:CONSOLE)`
-- Add `msimg32.lib` to Linker -> Input -> Additional Dependencies
+- Just compile and run!
 
 #### For MinGW-w64
 
-- Add the parameters when compiling: `-lm -luser32 -lgdi32 -lmsimg32`
+- Add the parameters when compiling: `-lm -luser32 -lgdi32`
 
 ## Credit
 

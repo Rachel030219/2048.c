@@ -375,6 +375,7 @@ int main() {
     struct GameData gameData;
     struct Move* moveHistory;
     int gameEnd = 0;
+    int running = 1;
     int lastMove = -1;   // used to indicate last move direction
     // struct GameDataSet dataSet, displayDataSet;
 
@@ -413,7 +414,7 @@ int main() {
     // initialize array and allocate memory
     gameData = start(gameMap);
     moveHistory = saveMap(gameMap, 0, 0);
-    while (!gameEnd) {
+    while (running) {
         int success = 0;
         int currentRotate = 0;
         int indexRow, indexColumn;
@@ -424,7 +425,7 @@ int main() {
         nk_input_begin(context);
         if (needs_refresh == 0) {
             if (GetMessageW(&msg, NULL, 0, 0) <= 0)
-                gameEnd = 1;
+                running = 0;
             else {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
@@ -434,7 +435,7 @@ int main() {
 
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT)
-                gameEnd = 1;
+                running = 0;
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
             needs_refresh = 1;
@@ -452,7 +453,7 @@ int main() {
                 }
                 break;
             case UNDO:
-                if (gameData.step > 0) {
+                if (gameData.step > 0 && !gameEnd) {
                     // first reduce the step
                     gameData.step--;
                     // if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it
@@ -507,7 +508,7 @@ int main() {
             generateRandomNumber(gameMap, 1);
             if (checkEnd(gameMap)) {
                 // TODO: handle game end
-                // gameEnd = 1;
+                gameEnd = 1;
             } else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
         }

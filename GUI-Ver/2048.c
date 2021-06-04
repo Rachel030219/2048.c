@@ -44,7 +44,8 @@ char hexColorsheet[12][8] = { "#DDE1E4", "#f44336", "#7784CF", "#2196f3", "#FFB6
 
 int windowWidth = 600;
 int windowHeight = 600;
-enum RotateCount { NONE = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = NONE;
+enum Command { NONE = -1, UNDO, RESTART  } command = NONE;
+enum RotateCount { ZERO = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = ZERO;
 char rotateNames[4][6] = { "left", "up", "right", "down" };
 
 int** allocateMap() {
@@ -315,7 +316,7 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
             windowHeight = HIWORD(lparam);
             break;
         case WM_KEYDOWN:
-            if (rotateTimes == NONE) {
+            if (rotateTimes == ZERO) {
                 switch (wparam) {
                     case VK_LEFT:
                         rotateTimes = LEFT;
@@ -333,8 +334,7 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
             }
             break;
         case WM_CHAR:
-        // TODO: handle u and r
-            if (rotateTimes == NONE) {
+            if (rotateTimes == ZERO) {
                 switch (wparam) {
                     case 'a':
                         rotateTimes = LEFT;
@@ -347,6 +347,16 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
                         break;
                     case 's':
                         rotateTimes = DOWN;
+                        break;
+                    case 'u':
+                        command = UNDO;
+                        break;
+                    case 'r':
+                        command = RESTART;
+                        break;
+                    default:
+                        command = NONE;
+                        rotateTimes = ZERO;
                         break;
                 }
             }
@@ -431,18 +441,43 @@ int main() {
         }
         nk_input_end(context);
         
-        if (rotateTimes != NONE) {
-            lastMove = rotateTimes;
-            for (currentRotate = 0; currentRotate < SIZE; currentRotate++) {
-                if (currentRotate == rotateTimes)
-                    success = moveLeft(gameMap, &gameData);
-                rotate(gameMap);
-            }
+        switch (command) {
+            case NONE:
+                if (rotateTimes != ZERO) {
+                    for (currentRotate = 0; currentRotate < SIZE; currentRotate++) {
+                        if (currentRotate == rotateTimes)
+                            success = moveLeft(gameMap, &gameData);
+                        rotate(gameMap);
+                    }
+                }
+                break;
+            case UNDO:
+                if (gameData.step > 0) {
+                    // first reduce the step
+                    gameData.step--;
+                    // if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it
+                    if (gameMap != moveHistory[gameData.step + 1].map)
+                        recycleMap(gameMap);
+                    // set gameMap to previous map
+                    gameMap = moveHistory[gameData.step].map;
+                    gameData.score = moveHistory[gameData.step].score;
+                    // recycle the undo-ed map
+                    recycleMap(moveHistory[gameData.step + 1].map);
+                }
+                break;
+            case RESTART:
+                gameEnd = 0;
+                recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                gameMap = allocateMap();
+                clearMap(gameMap);
+                gameData = start(gameMap);
+                moveHistory = saveMap(gameMap, 0, 0);
+                break;
         }
         
         title = (char*)malloc(100 * sizeof(char));
         if (lastMove != -1)
-            sprintf(title, "current score: %d, step count: %d, moved %s!", gameData.score, gameData.step, rotateNames[lastMove]);
+            sprintf(title, "current score: %d, step count: %d, moved %s", gameData.score, gameData.step, rotateNames[lastMove]);
         else
             sprintf(title, "current score: %d, step count: %d", gameData.score, gameData.step);
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
@@ -466,7 +501,8 @@ int main() {
         free(title);
         // DRAW!!!
         nk_gdi_render(nk_rgb(30,30,30));
-        if (rotateTimes != NONE && success) {
+        if (rotateTimes != ZERO && success) {
+            lastMove = rotateTimes;
             gameData.step++;
             generateRandomNumber(gameMap, 1);
             if (checkEnd(gameMap)) {
@@ -475,7 +511,8 @@ int main() {
             } else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
         }
-        rotateTimes = NONE;
+        rotateTimes = ZERO;
+        command = NONE;
     }
     // TODO: rank system
     // dataSet = readRecords();

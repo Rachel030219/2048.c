@@ -41,7 +41,7 @@ struct Move{
     int score;
 };
 
-char hexColorsheet[12][8] = { "#2D3439", "#B0413E", "#37515F", "#844FCF", "#33032F", "#00A896", "#548687", "#6A4D50", "#395D93", "#91A054", "#AB9B36", "#4CB944" };
+char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#9fb249", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
 int windowWidth = 600;
 int windowHeight = 600;
@@ -405,7 +405,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
         NULL, NULL, wc.hInstance, NULL);
     dc = GetDC(wnd);
     // initialize nuklear: GUI
-    font = nk_gdifont_create("SIMHEI", 20);
+    font = nk_gdifont_create("Microsoft YaHei UI Bold", 30);
     context = nk_gdi_init(font, dc, windowWidth, windowHeight);
     gameMap = allocateMap();
     // initialize random number generator and start game
@@ -420,7 +420,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
         char* title;
         int colorIndex;
         MSG msg;
-        Sleep(50);
+        Sleep(15);
         nk_input_begin(context);
         if (needs_refresh == 0) {
             if (GetMessageW(&msg, NULL, 0, 0) <= 0)
@@ -481,23 +481,23 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             strcpy(title, "Game ends!");
         } else {
             if (lastMove != -1)
-                sprintf(title, "Current score: %d, step count: %d, moved %s", gameData.score, gameData.step, rotateNames[lastMove]);
+                sprintf(title, "Score: %d, Step: %d, Moved %s", gameData.score, gameData.step, rotateNames[lastMove]);
             else
-                sprintf(title, "Current score: %d, step count: %d", gameData.score, gameData.step);
+                sprintf(title, "Score: %d, Step: %d", gameData.score, gameData.step);
         }
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
             for (indexRow = 0; indexRow < SIZE; indexRow++) {
                 nk_layout_row_dynamic(context, windowHeight / 5, 4);
                 for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
                     if (gameMap[indexRow][indexColumn] != 0) {
-                        int length = _snprintf(NULL, 0, "\n[%d]\n", gameMap[indexRow][indexColumn]);
+                        int length = _snprintf(NULL, 0, "%d", gameMap[indexRow][indexColumn]);
                         char* str = (char*)malloc(length + 1);
-                        _snprintf(str, length + 1, "\n[%d]\n", gameMap[indexRow][indexColumn]);
+                        _snprintf(str, length + 1, "%d", gameMap[indexRow][indexColumn]);
                         colorIndex = log((double)(gameMap[indexRow][indexColumn])) / LOG2;
-                        nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#EEEEEE"));
+                        nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#FFFFFF"));
                         free(str);
                     } else {
-                        nk_text_colored_background(context, "\n[ ]\n", 4, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#EEEEEE"));
+                        nk_text_colored_background(context, "[ ]", 3, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#FFFFFF"));
                     }
                 }
             }

@@ -23054,6 +23054,7 @@ nk_text_colored_background(struct nk_context *ctx, const char *str, int len,
     text.padding.y = item_padding.y;
     text.background = background;
     text.text = foreground;
+    nk_fill_rect(&win->buffer, bounds, 5.0f, background);
     nk_widget_text(&win->buffer, bounds, str, len, &text, alignment, style->font);
 }
 NK_API void

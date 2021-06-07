@@ -513,7 +513,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             gameData.step++;
             generateRandomNumber(gameMap, 1);
             if (checkEnd(gameMap)) {
-                // TODO: handle game end
                 gameEnd = 1;
             } else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);

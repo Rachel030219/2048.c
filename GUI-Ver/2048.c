@@ -20,11 +20,6 @@
 #define SAVE_FILE "records.txt"
 #define MAX_RANK_COUNT 10
 
-#define KEY_UP 72
-#define KEY_DOWN 80
-#define KEY_LEFT 75
-#define KEY_RIGHT 77
-
 struct GameData {
     int score;
     int step;
@@ -41,7 +36,7 @@ struct Move{
     int score;
 };
 
-char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#9fb249", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
+char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#94c9a9", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
 int windowWidth = 500;
 int windowHeight = 600;
@@ -501,8 +496,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     }
                 }
             }
-            nk_layout_row_static(context, 30, windowWidth * 0.75, 1);
-            nk_text(context, "按 u 后退一步，r 重新开始", 35, NK_TEXT_ALIGN_LEFT);
+            nk_layout_row_dynamic(context, 30, 1);
+            nk_text_colored_background(context, "按 u 后退一步，r 重新开始", 35, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
             nk_end(context);
         }
         free(title);

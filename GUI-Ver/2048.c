@@ -43,7 +43,7 @@ struct Move{
 
 char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#9fb249", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
-int windowWidth = 600;
+int windowWidth = 500;
 int windowHeight = 600;
 enum Command { NONE = -1, UNDO, RESTART  } command = NONE;
 enum RotateCount { ZERO = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = ZERO;
@@ -487,7 +487,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
         }
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
             for (indexRow = 0; indexRow < SIZE; indexRow++) {
-                nk_layout_row_dynamic(context, windowHeight / 5, 4);
+                nk_layout_row_dynamic(context, windowHeight / 6, 4);
                 for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
                     if (gameMap[indexRow][indexColumn] != 0) {
                         int length = _snprintf(NULL, 0, "%d", gameMap[indexRow][indexColumn]);
@@ -501,6 +501,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     }
                 }
             }
+            nk_layout_row_static(context, 30, windowWidth * 0.75, 1);
+            nk_text(context, "按 u 后退一步，r 重新开始", 35, NK_TEXT_ALIGN_LEFT);
             nk_end(context);
         }
         free(title);

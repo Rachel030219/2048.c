@@ -5,7 +5,7 @@ BIN = bin\2048.exe
 all: clean generate
 ifeq ($(OS),Windows_NT)
 	@echo Generating bin file and trying to run it...
-	${CC} 2048.c -o $(BIN) $(LINKERFLAG) && ${BIN}
+	${CC} 2048.c -o $(BIN) $(LINKERFLAG) -std=c89
 endif
 
 clean:

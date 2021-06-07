@@ -5,7 +5,7 @@
 #include <math.h>
 #include <windows.h>
 #include <tchar.h>
-// import nuklear for GUI
+/* import nuklear for GUI */
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
 #define NK_INCLUDE_STANDARD_VARARGS
@@ -20,21 +20,26 @@
 #define SAVE_FILE "records.txt"
 #define MAX_RANK_COUNT 10
 
-struct GameData {
+typedef struct GameData {
     int score;
     int step;
     char name[10];
-};
+} GameData;
 
-struct GameDataSet {
-    struct GameData* set;
+typedef struct GameDataSet {
+    GameData* set;
     int size;
-};
+} GameDataSet;
 
-struct Move{
+typedef struct Move{
     int** map;
     int score;
-};
+} Move;
+
+typedef struct StringBuffer {
+    char string[10];
+    int length;
+} StringBuffer;
 
 char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#94c9a9", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
@@ -43,6 +48,9 @@ int windowHeight = 600;
 enum Command { NONE = -1, UNDO, RESTART  } command = NONE;
 enum RotateCount { ZERO = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = ZERO;
 char rotateNames[4][6] = { "left", "up", "right", "down" };
+int detectInput = 0;
+int inputIndex = 0;
+char lastInput = '\0';
 
 int** allocateMap() {
     int** array;
@@ -94,7 +102,7 @@ struct Move* saveMap(int** sourceMap, int score, int destIndex) {
             tempMoveList = (struct Move*)realloc(moveList, size * sizeof(struct Move));
             if (tempMoveList != NULL) {
                 moveList = tempMoveList;
-                // fill all uninitialized memory with NULL and zero
+                /* fill all uninitialized memory with NULL and zero */
                 for (i = destIndex + 1; i < size; i++) {
                     moveList[i].map = NULL;
                     moveList[i].score = 0;
@@ -144,8 +152,8 @@ void generateRandomNumber(int** map, int count) {
     }
 }
 
-// merging left all rows, returns true when move succeeds
-int moveLeft(int** map, struct GameData* gameDataPointer) {
+/* merging left all rows, returns true when move succeeds */
+int moveLeft(int** map, GameData* gameDataPointer) {
     int moveCount = 0;
     int indexRow, indexColumn, indexTarget, targetIndex, unmovableCount;
     int* row;
@@ -154,9 +162,9 @@ int moveLeft(int** map, struct GameData* gameDataPointer) {
         unmovableCount = 0;
         for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
             if (indexColumn != 0 && row[indexColumn] != 0) {
-                // targetIndex: the destination current number should be moved to
+                /* targetIndex: the destination current number should be moved to */
                 targetIndex = indexColumn;
-                // traverse from current number to the left
+                /* traverse from current number to the left */
                 for (indexTarget = indexColumn - 1; indexTarget >= unmovableCount; indexTarget--) {
                     if (row[indexTarget] == 0) {
                         targetIndex = indexTarget;
@@ -169,7 +177,7 @@ int moveLeft(int** map, struct GameData* gameDataPointer) {
                     }
                 }
                 if (targetIndex != indexColumn) {
-                    // when this move involves game data, count the score
+                    /* when this move involves game data, count the score */
                     if (gameDataPointer != NULL)
                         (*gameDataPointer).score += row[targetIndex];
                     row[targetIndex] += row[indexColumn];
@@ -200,35 +208,35 @@ int checkEnd(int** map) {
     int indexRow, indexColumn, index, indexRotation;
     int moveSuccess = 0;
     int** tempMap;
-    // check if 2048 exists, ends immediately when true
+    /* check if 2048 exists, ends immediately when true */
     for (indexRow = 0; indexRow < SIZE; indexRow++) {
         for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
-            if (map[indexRow][indexColumn] == 2048)
+            if (map[indexRow][indexColumn] > 1024)
                 return gameSuccess;
         }
     }
-    // if 2048 does not exist, check movable
+    /* if 2048 does not exist, check movable */
     for (index = 0; index < SIZE; index++) {
-        // copy the whole map first
+        /* copy the whole map first */
         tempMap = copyMap(map);
-        // then rotate it for 0 to 3 times and check if moveable
+        /* then rotate it for 0 to 3 times and check if moveable */
         for (indexRotation = 0; indexRotation < index; indexRotation++) {
             rotate(tempMap);
         }
         moveSuccess -= moveLeft(tempMap, NULL);
-        // when done, free the temp map
+        /* when done, free the temp map */
         recycleMap(tempMap);
     }
     return moveSuccess == 0;
 }
 
 int compareRecord(const void* v1, const void* v2) {
-    const struct GameData* dataPointer1 = (struct GameData*)v1;
-    const struct GameData* dataPointer2 = (struct GameData*)v2;
+    const GameData* dataPointer1 = (GameData*)v1;
+    const GameData* dataPointer2 = (GameData*)v2;
     return (dataPointer1 -> score < dataPointer2 -> score) - (dataPointer1 -> score > dataPointer2 -> score);
 }
 
-void saveRecord(struct GameData data) {
+void saveRecord(GameData data) {
     FILE* file = fopen(SAVE_FILE, "a+");
     if (file != NULL) {
         fprintf(file, "%d|%d|%s\n", data.score, data.step, data.name);
@@ -238,18 +246,18 @@ void saveRecord(struct GameData data) {
     }
 }
 
-struct GameDataSet readRecords() {
+GameDataSet readRecords() {
     int size = SIZE;
     int index = 0;
-    struct GameData data;
-    struct GameData* tempDataSet;
-    struct GameDataSet dataSet = { (struct GameData*)calloc(size, sizeof(struct GameData)), index };
+    GameData data;
+    GameData* tempDataSet;
+    GameDataSet dataSet = { (GameData*)calloc(size, sizeof(GameData)), index };
     FILE* file = fopen(SAVE_FILE, "r");
     if (file != NULL) {
         while (!feof(file)) {
             if (index == size) {
                 size *= 2;
-                tempDataSet = (struct GameData*)realloc(dataSet.set, size * sizeof(struct GameData));
+                tempDataSet = (GameData*)realloc(dataSet.set, size * sizeof(GameData));
                 if (tempDataSet != NULL) {
                     dataSet.set = tempDataSet;
                 } else {
@@ -258,8 +266,10 @@ struct GameDataSet readRecords() {
                 }
             }
             fscanf(file, "%d|%d|%s\n", &data.score, &data.step, data.name);
-            dataSet.set[index] = data;
-            index++;
+            if (data.score != 0) {
+                dataSet.set[index] = data;
+                index++;
+            }
         }
         fclose(file);
         dataSet.size = index;
@@ -270,19 +280,7 @@ struct GameDataSet readRecords() {
     return dataSet;
 }
 
-void displayRecords(struct GameDataSet dataSet) {
-    int i, count;
-    if (dataSet.set != NULL) {
-        printf("Score\tSteps\tName\n");
-        qsort(dataSet.set, dataSet.size, sizeof(struct GameData), compareRecord);
-        count = dataSet.size < MAX_RANK_COUNT ? dataSet.size : MAX_RANK_COUNT;
-        for (i = 0; i < count; i++) {
-            printf("%d\t%d\t%s\n", dataSet.set[i].score, dataSet.set[i].step, dataSet.set[i].name);
-        }
-    }
-}
-
-int checkWhetherTopRanked(struct GameData data, struct GameDataSet dataSet) {
+int checkTopRanked(GameData data, GameDataSet dataSet) {
     int recordAboveCurrentCount = 0;
     int i;
     for (i = 0; i < dataSet.size; i++) {
@@ -295,8 +293,8 @@ int checkWhetherTopRanked(struct GameData data, struct GameDataSet dataSet) {
     return 1;
 }
 
-struct GameData start(int** map) {
-    struct GameData data = {0, 0, ""};
+GameData start(int** map) {
+    GameData data = {0, 0, ""};
     clearMap(map);
     generateRandomNumber(map, 2);
     return data;
@@ -326,36 +324,53 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
                     case VK_DOWN:
                         rotateTimes = DOWN;
                         break;
+                    case VK_RETURN:
+                        if (detectInput)
+                            detectInput = 0;
+                        break;
+                    case VK_BACK:
+                        if (detectInput && inputIndex > 0)
+                            inputIndex--;
+                        break;
+                    default:
+                        break;
                 }
             }
             break;
         case WM_CHAR:
             if (rotateTimes == ZERO) {
-                switch (wparam) {
-                    case 'a':
-                        rotateTimes = LEFT;
-                        break;
-                    case 'd':
-                        rotateTimes = RIGHT;
-                        break;
-                    case 'w':
-                        rotateTimes = UP;
-                        break;
-                    case 's':
-                        rotateTimes = DOWN;
-                        break;
-                    case 'u':
-                        command = UNDO;
-                        break;
-                    case 'r':
-                        command = RESTART;
-                        break;
-                    default:
-                        command = NONE;
-                        rotateTimes = ZERO;
-                        break;
+                if (!detectInput) {
+                    switch (wparam) {
+                        case 'a':
+                            rotateTimes = LEFT;
+                            break;
+                        case 'd':
+                            rotateTimes = RIGHT;
+                            break;
+                        case 'w':
+                            rotateTimes = UP;
+                            break;
+                        case 's':
+                            rotateTimes = DOWN;
+                            break;
+                        case 'u':
+                            command = UNDO;
+                            break;
+                        case 'r':
+                            command = RESTART;
+                            break;
+                        default:
+                            command = NONE;
+                            rotateTimes = ZERO;
+                            break;
+                    }
+                } else {
+                    if ((char)wparam >= 32 && (char)wparam <= 126)
+                        lastInput = (char)wparam;
                 }
             }
+            break;
+        default:
             break;
     }
 
@@ -366,52 +381,64 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
 }
 
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-    // initialize basic variables
+    /* initialize basic variables */
     static int** gameMap;
-    struct GameData gameData;
-    struct Move* moveHistory;
+    GameData gameData;
+    Move* moveHistory;
     int gameEnd = 0;
     int running = 1;
-    int lastMove = -1;   // used to indicate last move direction
+    int lastMove = -1;   /* used to indicate last move direction */
+    GameDataSet dataSet, displayDataSet;
+    int saveDest = 0;
+    int indexBuffer;
+    StringBuffer scoreBuffer[10], stepBuffer[10];
+    int nameLengthBuffer[MAX_RANK_COUNT];
+    int bufferInitialized = 0;
 
-    // initialize nuklear: define variables
+    /* initialize nuklear: define variables */
     struct nk_context* context;
     GdiFont* font;
     WNDCLASSW wc;
-    ATOM atom;
     RECT rect = { 0, 0, windowWidth, windowHeight };
     DWORD style = WS_OVERLAPPEDWINDOW;
     DWORD exstyle = WS_EX_TOOLWINDOW;
     HWND wnd;
     HDC dc;
     int needs_refresh = 1;
-    // initialize nuklear: Win32
+    /* initialize nuklear: Win32 */
     memset(&wc, 0, sizeof(wc));
     wc.lpfnWndProc = WindowProc;
-    wc.hInstance = GetModuleHandleW(0);
+    wc.hInstance = hInstance;
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.lpszClassName = L"2048";
-    atom = RegisterClassW(&wc);
+    RegisterClassW(&wc);
     AdjustWindowRectEx(&rect, style, FALSE, exstyle);
     wnd = CreateWindowExW(exstyle, wc.lpszClassName, L"2048",
         style | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
         rect.right - rect.left, rect.bottom - rect.top,
         NULL, NULL, wc.hInstance, NULL);
     dc = GetDC(wnd);
-    // initialize nuklear: GUI
+    /* initialize nuklear: GUI */
     font = nk_gdifont_create("Microsoft YaHei UI Bold", 30);
     context = nk_gdi_init(font, dc, windowWidth, windowHeight);
     gameMap = allocateMap();
-    // initialize random number generator and start game
+    /* initialize random number generator and start game */
     srand(time(NULL));
-    // initialize array and allocate memory
+    /* initialize array and allocate memory */
     gameData = start(gameMap);
     moveHistory = saveMap(gameMap, 0, 0);
+    /* read records from file */
+    dataSet = readRecords();
+    displayDataSet.set = calloc(dataSet.size + 1, sizeof(GameData));
+    displayDataSet.size = dataSet.size + 1;
+    memcpy(displayDataSet.set, dataSet.set, dataSet.size * sizeof(GameData));
+    displayDataSet.set[dataSet.size].score = -1;
+    free(dataSet.set);
     while (running) {
         int success = 0;
         int currentRotate = 0;
-        int indexRow, indexColumn;
+        int indexRow, indexColumn, indexData;
         char* title;
         int colorIndex;
         MSG msg;
@@ -435,10 +462,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             needs_refresh = 1;
         }
         nk_input_end(context);
-        
         switch (command) {
             case NONE:
-                if (rotateTimes != ZERO) {
+                if (rotateTimes != ZERO && !gameEnd) {
                     for (currentRotate = 0; currentRotate < SIZE; currentRotate++) {
                         if (currentRotate == rotateTimes)
                             success = moveLeft(gameMap, &gameData);
@@ -448,15 +474,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 break;
             case UNDO:
                 if (gameData.step > 0 && !gameEnd) {
-                    // first reduce the step
+                    /* first reduce the step */
                     gameData.step--;
-                    // if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it
+                    /* if gameMap does not match the undo-ed map(if so the user has undo-ed twice), recycle it */
                     if (gameMap != moveHistory[gameData.step + 1].map)
                         recycleMap(gameMap);
-                    // set gameMap to previous map
+                    /* set gameMap to previous map */
                     gameMap = moveHistory[gameData.step].map;
                     gameData.score = moveHistory[gameData.step].score;
-                    // recycle the undo-ed map
+                    /* recycle the undo-ed map */
                     recycleMap(moveHistory[gameData.step + 1].map);
                 }
                 break;
@@ -464,13 +490,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 gameEnd = 0;
                 lastMove = -1;
                 recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                /* revert all data */
                 gameMap = allocateMap();
                 clearMap(gameMap);
                 gameData = start(gameMap);
                 moveHistory = saveMap(gameMap, 0, 0);
+                detectInput = 0;
+                inputIndex = 0;
+                lastInput = '\0';
+                break;
+            default:
                 break;
         }
-        
         title = (char*)malloc(100 * sizeof(char));
         if (gameEnd) {
             strcpy(title, "Game ends!");
@@ -481,27 +512,98 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 sprintf(title, "Score: %d, Step: %d", gameData.score, gameData.step);
         }
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
-            for (indexRow = 0; indexRow < SIZE; indexRow++) {
-                nk_layout_row_dynamic(context, windowHeight / 6, 4);
-                for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
-                    if (gameMap[indexRow][indexColumn] != 0) {
-                        int length = _snprintf(NULL, 0, "%d", gameMap[indexRow][indexColumn]);
-                        char* str = (char*)malloc(length + 1);
-                        _snprintf(str, length + 1, "%d", gameMap[indexRow][indexColumn]);
-                        colorIndex = log((double)(gameMap[indexRow][indexColumn])) / LOG2;
-                        nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#FFFFFF"));
-                        free(str);
-                    } else {
-                        nk_text_colored_background(context, "[ ]", 3, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#FFFFFF"));
+            if (!gameEnd || (gameEnd && !checkTopRanked(gameData, displayDataSet))) {
+                for (indexRow = 0; indexRow < SIZE; indexRow++) {
+                    nk_layout_row_dynamic(context, windowHeight / 6, 4);
+                    for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
+                        if (gameMap[indexRow][indexColumn] != 0) {
+                            int length = _snprintf(NULL, 0, "%d", gameMap[indexRow][indexColumn]);
+                            char* str = (char*)malloc(length + 1);
+                            _snprintf(str, length + 1, "%d", gameMap[indexRow][indexColumn]);
+                            colorIndex = log((double)(gameMap[indexRow][indexColumn])) / LOG2;
+                            nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#FFFFFF"));
+                            free(str);
+                        } else {
+                            nk_text_colored_background(context, "[ ]", 3, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#FFFFFF"));
+                        }
                     }
                 }
+                nk_layout_row_dynamic(context, 30, 1);
+                nk_text_colored_background(context, "Press u to undo, r to restart", 29, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+            } else {
+                if (displayDataSet.set[displayDataSet.size - 1].score == -1) {
+                    displayDataSet.set[displayDataSet.size - 1] = gameData;
+                    qsort(displayDataSet.set, displayDataSet.size, sizeof(GameData), compareRecord);
+                    for (saveDest = 0; saveDest < displayDataSet.size; saveDest++) {
+                        if (strcmp("", displayDataSet.set[saveDest].name) == 0)
+                            break;
+                    }
+                }
+                if (!bufferInitialized) {
+                    int size = displayDataSet.size > MAX_RANK_COUNT ? MAX_RANK_COUNT : displayDataSet.size;
+                    for (indexBuffer = 0; indexBuffer < size; indexBuffer++) {
+                        itoa(displayDataSet.set[indexBuffer].score, scoreBuffer[indexBuffer].string, 10);
+                        scoreBuffer[indexBuffer].length = _snprintf(NULL, 0, "%d", displayDataSet.set[indexBuffer].score);
+                        itoa(displayDataSet.set[indexBuffer].step, stepBuffer[indexBuffer].string, 10);
+                        stepBuffer[indexBuffer].length = _snprintf(NULL, 0, "%d", displayDataSet.set[indexBuffer].step);
+                        if (indexBuffer != saveDest)
+                            nameLengthBuffer[indexBuffer] = _snprintf(NULL, 0, "%s", displayDataSet.set[indexBuffer].name);
+                    }
+                    bufferInitialized = 1;
+                }
+                if (detectInput) {
+                    /* TODO: fix unwanted values here */
+                    /* TODO: don't jump to rank directly, wait for confirmation first */
+                    displayDataSet.set[saveDest].name[inputIndex] = '_';
+                    nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 1), 3);
+                    nk_text_colored_background(context, "Score", 5, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                    nk_text_colored_background(context, "Steps", 5, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                    nk_text_colored_background(context, "Name", 4, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                    for (indexData = 0; indexData < (displayDataSet.size > MAX_RANK_COUNT ? MAX_RANK_COUNT : displayDataSet.size); indexData++) {
+                        nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 1), 3);
+                        nk_text_colored_background(context, scoreBuffer[indexData].string, scoreBuffer[indexData].length, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                        nk_text_colored_background(context, stepBuffer[indexData].string, stepBuffer[indexData].length, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                        if (indexData != saveDest)
+                            nk_text_colored_background(context, displayDataSet.set[indexData].name, nameLengthBuffer[indexData], NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                        else
+                            nk_text_colored_background(context, displayDataSet.set[indexData].name, inputIndex, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                    }
+                    if (lastInput != '\0') {
+                        displayDataSet.set[saveDest].name[inputIndex] = lastInput;
+                        inputIndex++;
+                        lastInput = '\0';
+                    }
+                    if (inputIndex == 9) {
+                        detectInput = 0;
+                    }
+                } else {
+                    /* end string and save data */
+                    displayDataSet.set[saveDest].name[inputIndex] = '\0';
+                    saveRecord(displayDataSet.set[saveDest]);
+                    /* free all memory and restart game */
+                    free(displayDataSet.set);
+                    gameEnd = 0;
+                    lastMove = -1;
+                    recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                    /* revert all data */
+                    detectInput = 0;
+                    inputIndex = 0;
+                    saveDest = 0;
+                    bufferInitialized = 0;
+                    lastInput = '\0';
+                    gameMap = allocateMap();
+                    clearMap(gameMap);
+                    gameData = start(gameMap);
+                    moveHistory = saveMap(gameMap, 0, 0);
+                }
             }
-            nk_layout_row_dynamic(context, 30, 1);
-            nk_text_colored_background(context, "按 u 后退一步，r 重新开始", 35, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
             nk_end(context);
         }
-        free(title);
-        // DRAW!!!
+        if (title != NULL) {
+            free(title);
+            title = NULL;
+        }
+        /* DRAW!!! */
         nk_gdi_render(nk_rgb(30,30,30));
         if (rotateTimes != ZERO && success) {
             lastMove = rotateTimes;
@@ -509,17 +611,17 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             generateRandomNumber(gameMap, 1);
             if (checkEnd(gameMap)) {
                 gameEnd = 1;
+                detectInput = 1;
             } else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
         }
         rotateTimes = ZERO;
         command = NONE;
     }
-    // TODO: rank system
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);
-    // release nuklear
+    /* release nuklear */
     nk_gdifont_del(font);
     ReleaseDC(wnd, dc);
-    UnregisterClassW(wc.lpszClassName, wc.hInstance);
+    UnregisterClassW(wc.lpszClassName, hInstance);
     return EXIT_SUCCESS;
 }

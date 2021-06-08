@@ -1,11 +1,11 @@
 CC := gcc
-LINKERFLAG = -lm -luser32 -lgdi32 -mwindows
+LINKERFLAG = -lm -luser32 -lgdi32
 BIN = bin\2048.exe
 
 all: clean generate
 ifeq ($(OS),Windows_NT)
 	@echo Generating bin file and trying to run it...
-	${CC} 2048.c -o $(BIN) $(LINKERFLAG) -std=c89
+	${CC} 2048.c -o $(BIN) $(LINKERFLAG)
 endif
 
 clean:

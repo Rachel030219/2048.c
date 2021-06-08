@@ -41,14 +41,15 @@ typedef struct StringBuffer {
     int length;
 } StringBuffer;
 
-char hexColorsheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#94c9a9", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
+char hexColorSheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#94c9a9", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
 int windowWidth = 500;
 int windowHeight = 600;
 enum Command { NONE = -1, UNDO, RESTART  } command = NONE;
 enum RotateCount { ZERO = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = ZERO;
 char rotateNames[4][6] = { "left", "up", "right", "down" };
-int detectInput = 0;
+int gameEnd = 0;
+int detectInput = 0, inputDone = 0;
 int inputIndex = 0;
 char lastInput = '\0';
 
@@ -255,6 +256,7 @@ GameDataSet readRecords() {
     FILE* file = fopen(SAVE_FILE, "r");
     if (file != NULL) {
         while (!feof(file)) {
+            data.score = 0;
             if (index == size) {
                 size *= 2;
                 tempDataSet = (GameData*)realloc(dataSet.set, size * sizeof(GameData));
@@ -265,7 +267,7 @@ GameDataSet readRecords() {
                     return dataSet;
                 }
             }
-            fscanf(file, "%d|%d|%s\n", &data.score, &data.step, data.name);
+            fscanf(file, "%d|%d|%s", &data.score, &data.step, data.name);
             if (data.score != 0) {
                 dataSet.set[index] = data;
                 index++;
@@ -325,8 +327,8 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
                         rotateTimes = DOWN;
                         break;
                     case VK_RETURN:
-                        if (detectInput)
-                            detectInput = 0;
+                        if (!inputDone)
+                            inputDone = 1;
                         break;
                     case VK_BACK:
                         if (detectInput && inputIndex > 0)
@@ -339,7 +341,11 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
             break;
         case WM_CHAR:
             if (rotateTimes == ZERO) {
-                if (!detectInput) {
+                if ((char)wparam == 'r' && !detectInput) {
+                    command = RESTART;
+                    break;
+                }
+                if (!gameEnd) {
                     switch (wparam) {
                         case 'a':
                             rotateTimes = LEFT;
@@ -356,17 +362,28 @@ static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lpa
                         case 'u':
                             command = UNDO;
                             break;
-                        case 'r':
-                            command = RESTART;
-                            break;
                         default:
                             command = NONE;
                             rotateTimes = ZERO;
                             break;
                     }
                 } else {
-                    if ((char)wparam >= 32 && (char)wparam <= 126)
-                        lastInput = (char)wparam;
+                    if (detectInput) {
+                        if ((char) wparam >= 32 && (char) wparam <= 126 && (char) wparam != '|')
+                            lastInput = (char) wparam;
+                    } else {
+                        switch ((char) wparam) {
+                            case 'y':
+                                detectInput = 1;
+                                inputDone = 0;
+                                break;
+                            case 'n':
+                                command = RESTART;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
                 }
             }
             break;
@@ -385,7 +402,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     static int** gameMap;
     GameData gameData;
     Move* moveHistory;
-    int gameEnd = 0;
     int running = 1;
     int lastMove = -1;   /* used to indicate last move direction */
     GameDataSet dataSet, displayDataSet;
@@ -401,7 +417,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     WNDCLASSW wc;
     RECT rect = { 0, 0, windowWidth, windowHeight };
     DWORD style = WS_OVERLAPPEDWINDOW;
-    DWORD exstyle = WS_EX_TOOLWINDOW;
+    DWORD exstyle = WS_EX_APPWINDOW;
     HWND wnd;
     HDC dc;
     int needs_refresh = 1;
@@ -427,6 +443,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     srand(time(NULL));
     /* initialize array and allocate memory */
     gameData = start(gameMap);
+    gameEnd = 0;
     moveHistory = saveMap(gameMap, 0, 0);
     /* read records from file */
     dataSet = readRecords();
@@ -437,7 +454,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     free(dataSet.set);
     while (running) {
         int success = 0;
-        int currentRotate = 0;
+        int currentRotate;
         int indexRow, indexColumn, indexData;
         char* title;
         int colorIndex;
@@ -487,21 +504,34 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 }
                 break;
             case RESTART:
+                /* free all memory and restart game */
+                free(displayDataSet.set);
                 gameEnd = 0;
                 lastMove = -1;
                 recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
+                /* read records again */
+                dataSet = readRecords();
+                displayDataSet.set = calloc(dataSet.size + 1, sizeof(GameData));
+                displayDataSet.size = dataSet.size + 1;
+                memcpy(displayDataSet.set, dataSet.set, dataSet.size * sizeof(GameData));
+                displayDataSet.set[dataSet.size].score = -1;
+                free(dataSet.set);
                 /* revert all data */
+                detectInput = 0;
+                inputDone = 0;
+                inputIndex = 0;
+                saveDest = 0;
+                bufferInitialized = 0;
+                lastInput = '\0';
                 gameMap = allocateMap();
                 clearMap(gameMap);
                 gameData = start(gameMap);
                 moveHistory = saveMap(gameMap, 0, 0);
-                detectInput = 0;
-                inputIndex = 0;
-                lastInput = '\0';
                 break;
             default:
                 break;
         }
+        command = NONE;
         title = (char*)malloc(100 * sizeof(char));
         if (gameEnd) {
             strcpy(title, "Game ends!");
@@ -512,7 +542,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 sprintf(title, "Score: %d, Step: %d", gameData.score, gameData.step);
         }
         if (nk_begin(context, title, nk_rect(0, 0, windowWidth, windowHeight), NK_WINDOW_TITLE)) {
-            if (!gameEnd || (gameEnd && !checkTopRanked(gameData, displayDataSet))) {
+            if (!detectInput) {
                 for (indexRow = 0; indexRow < SIZE; indexRow++) {
                     nk_layout_row_dynamic(context, windowHeight / 6, 4);
                     for (indexColumn = 0; indexColumn < SIZE; indexColumn++) {
@@ -521,7 +551,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                             char* str = (char*)malloc(length + 1);
                             _snprintf(str, length + 1, "%d", gameMap[indexRow][indexColumn]);
                             colorIndex = log((double)(gameMap[indexRow][indexColumn])) / LOG2;
-                            nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorsheet[colorIndex]), nk_rgb_hex("#FFFFFF"));
+                            nk_text_colored_background(context, str, length, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, nk_rgb_hex(hexColorSheet[colorIndex]), nk_rgb_hex("#FFFFFF"));
                             free(str);
                         } else {
                             nk_text_colored_background(context, "[ ]", 3, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#FFFFFF"));
@@ -529,7 +559,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     }
                 }
                 nk_layout_row_dynamic(context, 30, 1);
-                nk_text_colored_background(context, "Press u to undo, r to restart", 29, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                if (!gameEnd)
+                    nk_text_colored_background(context, "Press u to undo, r to restart", 29, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                else if (!checkTopRanked(gameData, displayDataSet))
+                    nk_text_colored_background(context, "Press r to restart", 18, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                else
+                    nk_text_colored_background(context, "Save records? Y/N", 17, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
             } else {
                 if (displayDataSet.set[displayDataSet.size - 1].score == -1) {
                     displayDataSet.set[displayDataSet.size - 1] = gameData;
@@ -551,9 +586,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     }
                     bufferInitialized = 1;
                 }
-                if (detectInput) {
-                    /* TODO: fix unwanted values here */
-                    /* TODO: don't jump to rank directly, wait for confirmation first */
+                if (!inputDone) {
                     displayDataSet.set[saveDest].name[inputIndex] = '_';
                     nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 1), 3);
                     nk_text_colored_background(context, "Score", 5, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
@@ -574,27 +607,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                         lastInput = '\0';
                     }
                     if (inputIndex == 9) {
-                        detectInput = 0;
+                        inputDone = 1;
                     }
-                } else {
+                }
+                if (inputDone) {
                     /* end string and save data */
                     displayDataSet.set[saveDest].name[inputIndex] = '\0';
                     saveRecord(displayDataSet.set[saveDest]);
-                    /* free all memory and restart game */
-                    free(displayDataSet.set);
-                    gameEnd = 0;
-                    lastMove = -1;
-                    recycleAllMaps(moveHistory, gameMap, gameData.step, 0);
-                    /* revert all data */
-                    detectInput = 0;
-                    inputIndex = 0;
-                    saveDest = 0;
-                    bufferInitialized = 0;
-                    lastInput = '\0';
-                    gameMap = allocateMap();
-                    clearMap(gameMap);
-                    gameData = start(gameMap);
-                    moveHistory = saveMap(gameMap, 0, 0);
+                    command = RESTART;
                 }
             }
             nk_end(context);
@@ -609,16 +629,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             lastMove = rotateTimes;
             gameData.step++;
             generateRandomNumber(gameMap, 1);
-            if (checkEnd(gameMap)) {
+            if (checkEnd(gameMap))
                 gameEnd = 1;
-                detectInput = 1;
-            } else
+            else
                 moveHistory = saveMap(gameMap, gameData.score, gameData.step);
         }
         rotateTimes = ZERO;
-        command = NONE;
     }
     recycleAllMaps(moveHistory, gameMap, gameData.step, 1);
+    free(displayDataSet.set);
     /* release nuklear */
     nk_gdifont_del(font);
     ReleaseDC(wnd, dc);

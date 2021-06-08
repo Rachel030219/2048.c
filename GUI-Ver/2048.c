@@ -44,7 +44,7 @@ typedef struct StringBuffer {
 char hexColorSheet[12][8] = { "#000000", "#b8dea6", "#71c183", "#94c9a9", "#57cb5e", "#4db07a", "#86a70e", "#acd718", "#029547", "#08766b", "#086632", "#02493b" };
 
 int windowWidth = 500;
-int windowHeight = 600;
+int windowHeight = 750;
 enum Command { NONE = -1, UNDO, RESTART  } command = NONE;
 enum RotateCount { ZERO = -1, LEFT, UP, RIGHT, DOWN } rotateTimes = ZERO;
 char rotateNames[4][6] = { "left", "up", "right", "down" };
@@ -559,12 +559,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     }
                 }
                 nk_layout_row_dynamic(context, 30, 1);
+                nk_text_colored_background(context, "WASD or arrow keys to move", 26, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                nk_layout_row_dynamic(context, 30, 1);
                 if (!gameEnd)
                     nk_text_colored_background(context, "Press u to undo, r to restart", 29, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
                 else if (!checkTopRanked(gameData, displayDataSet))
                     nk_text_colored_background(context, "Press r to restart", 18, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
                 else
-                    nk_text_colored_background(context, "Save records? Y/N", 17, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
+                    nk_text_colored_background(context, "Save records? (Y/N)", 19, NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE, context->style.window.background, nk_rgb_hex("#DDDDDD"));
             } else {
                 if (displayDataSet.set[displayDataSet.size - 1].score == -1) {
                     displayDataSet.set[displayDataSet.size - 1] = gameData;
@@ -588,12 +590,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 }
                 if (!inputDone) {
                     displayDataSet.set[saveDest].name[inputIndex] = '_';
-                    nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 1), 3);
+                    nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 2), 3);
                     nk_text_colored_background(context, "Score", 5, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
                     nk_text_colored_background(context, "Steps", 5, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
                     nk_text_colored_background(context, "Name", 4, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
                     for (indexData = 0; indexData < (displayDataSet.size > MAX_RANK_COUNT ? MAX_RANK_COUNT : displayDataSet.size); indexData++) {
-                        nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 1), 3);
+                        nk_layout_row_dynamic(context, windowHeight / (MAX_RANK_COUNT + 2), 3);
                         nk_text_colored_background(context, scoreBuffer[indexData].string, scoreBuffer[indexData].length, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
                         nk_text_colored_background(context, stepBuffer[indexData].string, stepBuffer[indexData].length, NK_TEXT_ALIGN_LEFT , context->style.window.background, nk_rgb_hex("#DDDDDD"));
                         if (indexData != saveDest)

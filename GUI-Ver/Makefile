@@ -1,11 +1,18 @@
 CC := gcc
-LINKERFLAG = -lm -luser32 -lgdi32
+LINKER_FLAG = -lm -luser32 -lgdi32
+RELEASE_LINKER_FLAG = $(LINKER_FLAG) -O3 -Wall -Wextra
 BIN = bin\2048.exe
 
 all: clean generate
 ifeq ($(OS),Windows_NT)
 	@echo Generating bin file and trying to run it...
-	${CC} 2048.c -o $(BIN) $(LINKERFLAG)
+	${CC} 2048.c -o $(BIN) $(LINKER_FLAG)
+endif
+
+release: clean generate
+ifeq ($(OS),Windows_NT)
+	@echo Generating release...
+	${CC} 2048.c -o $(BIN) $(RELEASE_LINKER_FLAG)
 endif
 
 clean:
